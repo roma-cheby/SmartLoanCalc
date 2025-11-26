@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Регистрация</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" href="/css/main.css"/>
+</head>
+<body class="auth-page">
+<section class="auth-card">
+    <h1>Регистрация</h1>
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+    <form th:action="@{/register}" th:object="${user}" method="post">
+        <label>Логин
+            <input type="text" th:field="*{username}" required/>
+            <span class="field-error" th:if="${#fields.hasErrors('username')}"
+                  th:errors="*{username}"></span>
+        </label>
+        <label>Email
+            <input type="email" th:field="*{email}" required/>
+            <span class="field-error" th:if="${#fields.hasErrors('email')}"
+                  th:errors="*{email}"></span>
+        </label>
+        <label>Пароль
+            <input type="password" th:field="*{password}" required/>
+            <span class="field-error" th:if="${#fields.hasErrors('password')}"
+                  th:errors="*{password}"></span>
+        </label>
+        <label>Повтор пароля
+            <input type="password" th:field="*{confirmPassword}" required/>
+        </label>
+        <button type="submit">Создать аккаунт</button>
+    </form>
+    <p>Уже есть аккаунт? <a th:href="@{/login}">Войти</a></p>
+</section>
+</body>
+</html>
+

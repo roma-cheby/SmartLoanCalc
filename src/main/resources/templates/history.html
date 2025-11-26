@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>История расчётов</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" href="/css/main.css"/>
+</head>
+<body>
+<header class="topbar">
+    <div class="logo">SmartLoanCalc</div>
+    <nav>
+        <a th:href="@{/calculator}">Калькулятор</a>
+        <a th:href="@{/history}">История</a>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="link-button">Выход</button>
+        </form>
+    </nav>
+</header>
+
+<main class="layout">
+    <section class="card">
+        <h1>Фильтр</h1>
+        <form th:action="@{/history}" th:object="${filter}" method="get" class="grid-3">
+            <label>От
+                <input type="date" th:field="*{fromDate}"/>
+            </label>
+            <label>До
+                <input type="date" th:field="*{toDate}"/>
+            </label>
+            <label>Тип кредита
+                <select th:field="*{loanType}">
+                    <option value="">Все</option>
+                    <option th:value="CONSUMER">Потребительский</option>
+                    <option th:value="MORTGAGE">Ипотека</option>
+                </select>
+            </label>
+            <label>Тип платежа
+                <select th:field="*{paymentType}">
+                    <option value="">Все</option>
+                    <option th:value="ANNUITY">Аннуитет</option>
+                    <option th:value="DIFFERENTIAL">Дифференциальный</option>
+                </select>
+            </label>
+            <label>Валюта
+                <select th:field="*{currency}">
+                    <option value="">Все</option>
+                    <option th:each="cur : ${currencies}"
+                            th:value="${cur}"
+                            th:text="${cur}"></option>
+                </select>
+            </label>
+            <label>Мин. сумма
+                <input type="number" step="1000" th:field="*{minPrincipal}"/>
+            </label>
+            <label>Макс. сумма
+                <input type="number" step="1000" th:field="*{maxPrincipal}"/>
+            </label>
+            <label>Мин. ставка
+                <input type="number" step="0.1" th:field="*{minRate}"/>
+            </label>
+            <label>Макс. ставка
+                <input type="number" step="0.1" th:field="*{maxRate}"/>
+            </label>
+            <div class="actions">
+                <button type="submit">Применить</button>
+                <a class="secondary" th:href="@{/history}">Сбросить</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>История</h2>
+        <div class="info" th:if="${message}" th:text="${message}"></div>
+        <div th:if="${#lists.isEmpty(history)}">Записи не найдены.</div>
+        <div class="table-wrapper" th:if="${!#lists.isEmpty(history)}">
+            <table>
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Тип</th>
+                    <th>Валюта</th>
+                    <th>Платежи</th>
+                    <th>Сумма</th>
+                    <th>Ставка</th>
+                    <th>Срок</th>
+                    <th>Переплата</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${history}">
+                    <td th:text="${#temporals.format(item.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                    <td th:text="${item.loanType}"></td>
+                    <td th:text="${item.currency}"></td>
+                    <td th:text="${item.paymentType}"></td>
+                    <td th:text="${item.principal}"></td>
+                    <td th:text="${item.interestRate}"></td>
+                    <td th:text="${item.durationMonths} + ' мес.'"></td>
+                    <td th:text="${item.totalInterest}"></td>
+                    <td class="actions">
+                        <form th:action="@{|/history/${item.id}/rerun|}" method="post">
+                            <button type="submit" class="secondary">Повторить</button>
+                        </form>
+                        <form th:action="@{|/history/${item.id}/delete|}" method="post">
+                            <button type="submit" class="danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>
+

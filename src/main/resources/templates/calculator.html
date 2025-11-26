@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>SmartLoanCalc</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" href="/css/main.css"/>
+    <script defer th:src="@{/js/calculator.js}" src="/js/calculator.js"></script>
+</head>
+<body>
+<header class="topbar">
+    <div class="logo">SmartLoanCalc</div>
+    <nav>
+        <a th:href="@{/calculator}">Калькулятор</a>
+        <a th:href="@{/history}" th:if="${authenticated}">История</a>
+        <a th:href="@{/login}" th:if="${!authenticated}">Вход</a>
+        <form th:action="@{/logout}" method="post" th:if="${authenticated}">
+            <button type="submit" class="link-button">Выход</button>
+        </form>
+    </nav>
+</header>
+
+<main class="layout">
+    <section class="card">
+        <h1>Расчёт кредита</h1>
+        <div class="info" th:if="${loanRequestFromHistory}">Форма заполнена параметрами из истории</div>
+        <form th:action="@{/calculator}" th:object="${loanRequest}" method="post">
+            <div class="grid-2">
+                <label>Валюта
+                    <select th:field="*{currency}">
+                        <option th:each="cur : ${currencies}"
+                                th:value="${cur}"
+                                th:text="${cur}"></option>
+                    </select>
+                </label>
+                <label>Тип платежа
+                    <select th:field="*{paymentType}">
+                        <option th:each="type : ${paymentTypes}"
+                                th:value="${type}"
+                                th:text="${type}"></option>
+                    </select>
+                </label>
+                <label>Тип кредита
+                    <select th:field="*{loanType}">
+                        <option th:value="CONSUMER">Потребительский</option>
+                        <option th:value="MORTGAGE">Ипотека</option>
+                    </select>
+                </label>
+                <label>Сумма, ₽
+                    <input type="number" th:field="*{principal}" step="1000" min="1000" required/>
+                    <span class="field-error" th:if="${#fields.hasErrors('principal')}" th:errors="*{principal}"></span>
+                </label>
+                <label>Ставка, %
+                    <input type="number" th:field="*{interestRate}" step="0.1" min="0.1" required/>
+                    <span class="field-error" th:if="${#fields.hasErrors('interestRate')}" th:errors="*{interestRate}"></span>
+                </label>
+                <label>Срок, месяцев
+                    <input type="number" th:field="*{durationMonths}" min="1" max="600" required/>
+                    <span class="field-error" th:if="${#fields.hasErrors('durationMonths')}" th:errors="*{durationMonths}"></span>
+                </label>
+                <label>Срок, лет
+                    <input type="number" th:field="*{durationYears}" min="1" max="50"/>
+                    <span class="field-error" th:if="${#fields.hasErrors('durationYears')}" th:errors="*{durationYears}"></span>
+                </label>
+                <label>Дата выдачи
+                    <input type="date" th:field="*{disbursementDate}" required/>
+                    <span class="field-error" th:if="${#fields.hasErrors('disbursementDate')}" th:errors="*{disbursementDate}"></span>
+                </label>
+                <label>Дата первого платежа
+                    <input type="date" th:field="*{firstPaymentDate}" required/>
+                    <span class="field-error" th:if="${#fields.hasErrors('firstPaymentDate')}" th:errors="*{firstPaymentDate}"></span>
+                </label>
+                <label>Способ перерасчёта
+                    <select th:field="*{recalculationMode}">
+                        <option th:each="mode : ${recalculationModes}"
+                                th:value="${mode}"
+                                th:text="${mode}"></option>
+                    </select>
+                </label>
+                <label class="checkbox" th:if="${authenticated}">
+                    <input type="checkbox" th:field="*{saveToHistory}"/>
+                    <span>Сохранить в историю</span>
+                </label>
+            </div>
+
+            <h2>Изменяемая процентная ставка</h2>
+            <div id="rate-change-list" class="dynamic-list"
+                 th:attr="data-index=${#lists.size(loanRequest.rateChanges)}"
+                 data-prefix="rateChanges"
+                 data-template="rate-change-template">
+                <div class="early-payment-row header">
+                    <span>Дата начала</span>
+                    <span>Новая ставка %</span>
+                    <span></span>
+                </div>
+                <div class="early-payment-row dynamic-row" th:each="period,iterStat : *{rateChanges}">
+                    <input type="date"
+                           th:name="|rateChanges[${iterStat.index}].startDate|"
+                           th:value="${period.startDate}"
+                           data-field="startDate"/>
+                    <input type="number" step="0.01"
+                           th:name="|rateChanges[${iterStat.index}].newRate|"
+                           th:value="${period.newRate}"
+                           placeholder="Ставка"
+                           data-field="newRate"/>
+                    <button type="button" class="danger" onclick="removeRow(this, 'rate-change-list')">×</button>
+                </div>
+            </div>
+            <button type="button" class="secondary" onclick="addDynamicRow('rate-change-list')">Добавить период</button>
+
+            <h2>Досрочные выплаты</h2>
+            <h3>Единовременные</h3>
+            <div id="one-time-payment-list" class="dynamic-list"
+                 th:attr="data-index=${#lists.size(loanRequest.earlyPayments)}"
+                 data-prefix="earlyPayments"
+                 data-template="one-time-payment-template">
+                <div class="early-payment-row header">
+                    <span>Дата</span>
+                    <span>Сумма</span>
+                    <span>Списать</span>
+                    <span></span>
+                </div>
+                <div class="early-payment-row dynamic-row" th:each="payment,iterStat : *{earlyPayments}">
+                    <input type="date"
+                           th:name="|earlyPayments[${iterStat.index}].paymentDate|"
+                           th:value="${payment.paymentDate}"
+                           data-field="paymentDate"/>
+                    <input type="number" min="1" step="100"
+                           th:name="|earlyPayments[${iterStat.index}].amount|"
+                           th:value="${payment.amount}"
+                           placeholder="Сумма"
+                           data-field="amount"/>
+                    <select th:name="|earlyPayments[${iterStat.index}].applicationMode|"
+                            data-field="applicationMode">
+                        <option th:each="mode : ${applicationModes}"
+                                th:value="${mode}"
+                                th:selected="${mode == payment.applicationMode}"
+                                th:text="${mode}"></option>
+                    </select>
+                    <button type="button" class="danger" onclick="removeRow(this, 'one-time-payment-list')">×</button>
+                </div>
+            </div>
+            <button type="button" class="secondary" onclick="addDynamicRow('one-time-payment-list')">Добавить платёж</button>
+
+            <h3>Периодические</h3>
+            <div id="periodic-payment-list" class="dynamic-list"
+                 th:attr="data-index=${#lists.size(loanRequest.periodicEarlyPayments)}"
+                 data-prefix="periodicEarlyPayments"
+                 data-template="periodic-payment-template">
+                <div class="early-payment-row header">
+                    <span>Дата старта</span>
+                    <span>Интервал (мес)</span>
+                    <span>Сумма</span>
+                    <span>Списать</span>
+                    <span></span>
+                </div>
+                <div class="early-payment-row dynamic-row" th:each="payment,iterStat : *{periodicEarlyPayments}">
+                    <input type="date"
+                           th:name="|periodicEarlyPayments[${iterStat.index}].startDate|"
+                           th:value="${payment.startDate}"
+                           data-field="startDate"/>
+                    <input type="number" min="1" step="1"
+                           th:name="|periodicEarlyPayments[${iterStat.index}].intervalMonths|"
+                           th:value="${payment.intervalMonths}"
+                           data-field="intervalMonths"/>
+                    <input type="number" min="1" step="100"
+                           th:name="|periodicEarlyPayments[${iterStat.index}].amount|"
+                           th:value="${payment.amount}"
+                           data-field="amount"/>
+                    <select th:name="|periodicEarlyPayments[${iterStat.index}].applicationMode|"
+                            data-field="applicationMode">
+                        <option th:each="mode : ${applicationModes}"
+                                th:value="${mode}"
+                                th:selected="${mode == payment.applicationMode}"
+                                th:text="${mode}"></option>
+                    </select>
+                    <button type="button" class="danger" onclick="removeRow(this, 'periodic-payment-list')">×</button>
+                </div>
+            </div>
+            <button type="button" class="secondary" onclick="addDynamicRow('periodic-payment-list')">Добавить периодический платёж</button>
+
+            <div class="actions">
+                <button type="submit">Рассчитать</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="card" th:if="${result}">
+        <h2>Итоги</h2>
+        <div class="totals">
+            <div>
+                <span class="label">Общая выплата</span>
+                    <span th:text="${result.currency} + ' ' + #numbers.formatDecimal(result.totalPayment, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
+            <div>
+                <span class="label">Переплата</span>
+                    <span th:text="${result.currency} + ' ' + #numbers.formatDecimal(result.totalInterest, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>#</th>
+                        <th>Дата</th>
+                    <th>Платёж</th>
+                    <th>Основной долг</th>
+                    <th>%</th>
+                    <th>Остаток</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${result.schedule}">
+                    <td th:text="${item.monthNumber}"></td>
+                    <td th:text="${#temporals.format(item.paymentDate, 'dd.MM.yyyy')}"></td>
+                    <td th:text="${item.paymentAmount}"></td>
+                    <td th:text="${item.principalPart}"></td>
+                    <td th:text="${item.interestPart}"></td>
+                    <td th:text="${item.remainingDebt}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<template id="one-time-payment-template">
+    <div class="early-payment-row dynamic-row">
+        <input type="date" data-field="paymentDate"/>
+        <input type="number" min="1" step="100" placeholder="Сумма" data-field="amount"/>
+        <select data-field="applicationMode">
+            <option th:each="mode : ${applicationModes}"
+                    th:value="${mode}"
+                    th:text="${mode}"></option>
+        </select>
+        <button type="button" class="danger" onclick="removeRow(this, 'one-time-payment-list')">×</button>
+    </div>
+</template>
+
+<template id="periodic-payment-template">
+    <div class="early-payment-row dynamic-row">
+        <input type="date" data-field="startDate"/>
+        <input type="number" min="1" step="1" placeholder="Интервал" data-field="intervalMonths"/>
+        <input type="number" min="1" step="100" placeholder="Сумма" data-field="amount"/>
+        <select data-field="applicationMode">
+            <option th:each="mode : ${applicationModes}"
+                    th:value="${mode}"
+                    th:text="${mode}"></option>
+        </select>
+        <button type="button" class="danger" onclick="removeRow(this, 'periodic-payment-list')">×</button>
+    </div>
+</template>
+
+<template id="rate-change-template">
+    <div class="early-payment-row dynamic-row">
+        <input type="date" data-field="startDate"/>
+        <input type="number" min="0" step="0.01" placeholder="Ставка" data-field="newRate"/>
+        <button type="button" class="danger" onclick="removeRow(this, 'rate-change-list')">×</button>
+    </div>
+</template>
+</body>
+</html>
+
