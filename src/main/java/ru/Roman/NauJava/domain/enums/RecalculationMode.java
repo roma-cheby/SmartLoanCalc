@@ -5,6 +5,13 @@ package ru.Roman.NauJava.domain.enums;
  */
 public enum RecalculationMode {
     REDUCE_TERM,
-    REDUCE_PAYMENT
+    REDUCE_PAYMENT;
+
+    public String getDisplayName() {
+        return switch (this) {
+            case REDUCE_TERM -> "Уменьшение срока";
+            case REDUCE_PAYMENT -> "Уменьшение платежа";
+        };
+    }
 }
 

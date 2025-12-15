@@ -5,6 +5,13 @@ package ru.Roman.NauJava.domain.enums;
  */
 public enum PaymentType {
     ANNUITY,
-    DIFFERENTIAL
+    DIFFERENTIAL;
+
+    public String getDisplayName() {
+        return switch (this) {
+            case ANNUITY -> "Аннуитетный";
+            case DIFFERENTIAL -> "Дифференцированный";
+        };
+    }
 }
 

@@ -43,5 +43,15 @@ public class PaymentScheduleItem {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal remainingDebt;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal subsidyAmount;
+
+    /**
+     * Флаг досрочного платежа (не регулярный платёж по графику).
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean earlyPayment = false;
 }
 

@@ -6,6 +6,7 @@ import ru.Roman.NauJava.domain.enums.LoanCurrency;
 import ru.Roman.NauJava.domain.enums.LoanType;
 import ru.Roman.NauJava.domain.enums.PaymentType;
 import ru.Roman.NauJava.domain.enums.RecalculationMode;
+import ru.Roman.NauJava.domain.enums.SubsidyMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,6 +29,18 @@ public class LoanCalculationResponseDto {
     RecalculationMode recalculationMode;
     LocalDate disbursementDate;
     LocalDate firstPaymentDate;
+    boolean adjustWeekends;
+    
+    // Субсидия от застройщика
+    boolean developerSubsidy;
+    BigDecimal subsidizedRate;
+    Integer subsidyDurationMonths;
+    SubsidyMode subsidyMode;
+    BigDecimal totalSubsidy; // Общая сумма субсидии от застройщика
+    BigDecimal subsidizedPayment; // Платёж в период субсидии
+    BigDecimal fullPayment; // Платёж после окончания субсидии
+    BigDecimal balanceAfterSubsidy; // Остаток долга после субсидии
+    
     BigDecimal totalInterest;
     BigDecimal totalPayment;
     LocalDateTime createdAt;

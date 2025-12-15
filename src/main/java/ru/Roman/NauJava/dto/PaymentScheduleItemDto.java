@@ -18,5 +18,7 @@ public class PaymentScheduleItemDto {
     BigDecimal principalPart;
     BigDecimal interestPart;
     BigDecimal remainingDebt;
+    BigDecimal subsidyAmount; // Субсидия от застройщика за этот месяц
+    boolean earlyPayment; // Флаг досрочного платежа
 }
 

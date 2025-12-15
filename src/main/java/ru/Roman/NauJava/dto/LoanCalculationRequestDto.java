@@ -3,10 +3,12 @@ package ru.Roman.NauJava.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 import ru.Roman.NauJava.domain.enums.LoanCurrency;
 import ru.Roman.NauJava.domain.enums.LoanType;
 import ru.Roman.NauJava.domain.enums.PaymentType;
 import ru.Roman.NauJava.domain.enums.RecalculationMode;
+import ru.Roman.NauJava.domain.enums.SubsidyMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,22 +38,17 @@ public class LoanCalculationRequestDto {
     @DecimalMax(value = "99.99", message = "Ставка должна быть < 100")
     private BigDecimal interestRate;
 
+    @NotNull(message = "Срок кредита обязателен")
     @Min(value = 1, message = "Минимум 1 месяц")
     @Max(value = 600, message = "Максимум 600 месяцев")
     private Integer durationMonths;
-
-    @Min(value = 1, message = "Минимум 1 год")
-    @Max(value = 50, message = "Максимум 50 лет")
-    private Integer durationYears;
 
     @NotNull(message = "Тип платежей обязателен")
     private PaymentType paymentType = PaymentType.ANNUITY;
 
     @NotNull(message = "Дата выдачи обязательна")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate disbursementDate;
-
-    @NotNull(message = "Дата первого платежа обязательна")
-    private LocalDate firstPaymentDate;
 
     @NotNull(message = "Способ перерасчёта обязателен")
     private RecalculationMode recalculationMode = RecalculationMode.REDUCE_TERM;
@@ -67,17 +64,53 @@ public class LoanCalculationRequestDto {
 
     private boolean saveToHistory;
 
+    /**
+     * Переносить даты платежей с выходных на ближайший будний день.
+     */
+    private boolean adjustWeekends = true;
+
+    /**
+     * Субсидированная ипотека от застройщика.
+     */
+    private boolean developerSubsidy = false;
+
+    /**
+     * Льготная ставка от застройщика (годовая, %).
+     */
+    @DecimalMin(value = "0.0", message = "Льготная ставка должна быть >= 0")
+    @DecimalMax(value = "99.99", message = "Льготная ставка должна быть < 100")
+    private BigDecimal subsidizedRate;
+
+    /**
+     * Срок субсидии в месяцах.
+     */
+    @Min(value = 1, message = "Минимальный срок субсидии 1 месяц")
+    @Max(value = 600, message = "Максимальный срок субсидии 600 месяцев")
+    private Integer subsidyDurationMonths;
+
+    /**
+     * Режим субсидии.
+     */
+    private SubsidyMode subsidyMode = SubsidyMode.FIXED_PAYMENT;
+
+    /**
+     * Ручной ввод платежа в льготный период (если указано — используется вместо расчёта).
+     */
+    @DecimalMin(value = "0.01", message = "Платёж должен быть > 0")
+    private BigDecimal subsidizedPaymentAmount;
+
     public int resolveDurationMonths() {
-        if (durationMonths != null) {
-            return durationMonths;
-        }
-        return durationYears != null ? durationYears * 12 : 0;
+        return durationMonths != null ? durationMonths : 0;
     }
 
-    @AssertTrue(message = "Укажите срок в месяцах или годах")
-    public boolean isDurationProvided() {
-        return (durationMonths != null && durationMonths > 0)
-                || (durationYears != null && durationYears > 0);
+    /**
+     * Вычисляет дату первого платежа - через месяц после даты выдачи.
+     */
+    public LocalDate resolveFirstPaymentDate() {
+        if (disbursementDate == null) {
+            return null;
+        }
+        return disbursementDate.plusMonths(1);
     }
 
     @AssertTrue(message = "Периоды изменения ставок не должны пересекаться")
@@ -97,12 +130,5 @@ public class LoanCalculationRequestDto {
         return true;
     }
 
-    @AssertTrue(message = "Дата первого платежа должна быть не раньше даты выдачи")
-    public boolean isFirstPaymentAfterDisbursement() {
-        if (disbursementDate == null || firstPaymentDate == null) {
-            return true;
-        }
-        return !firstPaymentDate.isBefore(disbursementDate);
-    }
 }
 

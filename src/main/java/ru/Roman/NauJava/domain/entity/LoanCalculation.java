@@ -6,6 +6,7 @@ import ru.Roman.NauJava.domain.enums.LoanCurrency;
 import ru.Roman.NauJava.domain.enums.LoanType;
 import ru.Roman.NauJava.domain.enums.PaymentType;
 import ru.Roman.NauJava.domain.enums.RecalculationMode;
+import ru.Roman.NauJava.domain.enums.SubsidyMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -63,6 +64,25 @@ public class LoanCalculation {
 
     @Column(nullable = false)
     private LocalDate firstPaymentDate;
+
+    @Column(nullable = false)
+    private boolean adjustWeekends;
+
+    // Субсидия от застройщика
+    @Column(nullable = false)
+    private boolean developerSubsidy;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal subsidizedRate;
+
+    private Integer subsidyDurationMonths;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private SubsidyMode subsidyMode;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal totalSubsidy;
 
     @Builder.Default
     @OneToMany(mappedBy = "calculation", cascade = CascadeType.ALL, orphanRemoval = true)

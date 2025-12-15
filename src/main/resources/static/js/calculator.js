@@ -45,6 +45,42 @@ function reindexRows(container) {
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.dynamic-list').forEach(reindexRows);
+    
+    // Обработчик типа кредита для показа/скрытия раздела субсидии
+    const loanTypeSelect = document.querySelector('select[name="loanType"]');
+    const subsidySection = document.getElementById('subsidySection');
+    
+    function updateSubsidyVisibility() {
+        if (loanTypeSelect && subsidySection) {
+            if (loanTypeSelect.value === 'MORTGAGE') {
+                subsidySection.style.display = '';
+            } else {
+                subsidySection.style.display = 'none';
+            }
+        }
+    }
+    
+    if (loanTypeSelect && subsidySection) {
+        // Инициализация при загрузке
+        updateSubsidyVisibility();
+        
+        // Обработчик изменения
+        loanTypeSelect.addEventListener('change', updateSubsidyVisibility);
+    }
+    
+    // Обработчик чекбокса субсидии от застройщика
+    const subsidyCheckbox = document.getElementById('developerSubsidyCheckbox');
+    const subsidyFields = document.getElementById('subsidyFields');
+    
+    if (subsidyCheckbox && subsidyFields) {
+        subsidyCheckbox.addEventListener('change', () => {
+            if (subsidyCheckbox.checked) {
+                subsidyFields.classList.remove('hidden');
+            } else {
+                subsidyFields.classList.add('hidden');
+            }
+        });
+    }
 });
 
 window.addDynamicRow = addDynamicRow;

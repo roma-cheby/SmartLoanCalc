@@ -43,6 +43,8 @@ public class EarlyPayment {
 
     private LocalDate startDate;
 
+    private LocalDate endDate;
+
     private Integer intervalMonths;
 
     @Column(nullable = false, precision = 19, scale = 2)

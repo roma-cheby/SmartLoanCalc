@@ -1,6 +1,7 @@
 package ru.Roman.NauJava.mapper;
 
 import org.springframework.stereotype.Component;
+import java.math.BigDecimal;
 import ru.Roman.NauJava.domain.entity.LoanCalculation;
 import ru.Roman.NauJava.domain.entity.PaymentScheduleItem;
 import ru.Roman.NauJava.dto.LoanCalculationHistoryDto;
@@ -19,6 +20,13 @@ import java.util.stream.Collectors;
 public class LoanCalculationMapper {
 
     public LoanCalculationResponseDto toResponse(LoanCalculation calculation) {
+        return toResponse(calculation, null, null, null);
+    }
+
+    public LoanCalculationResponseDto toResponse(LoanCalculation calculation,
+                                                  BigDecimal subsidizedPayment,
+                                                  BigDecimal fullPayment,
+                                                  BigDecimal balanceAfterSubsidy) {
         if (calculation == null) {
             return null;
         }
@@ -33,6 +41,15 @@ public class LoanCalculationMapper {
                 .recalculationMode(calculation.getRecalculationMode())
                 .disbursementDate(calculation.getDisbursementDate())
                 .firstPaymentDate(calculation.getFirstPaymentDate())
+                .adjustWeekends(calculation.isAdjustWeekends())
+                .developerSubsidy(calculation.isDeveloperSubsidy())
+                .subsidizedRate(calculation.getSubsidizedRate())
+                .subsidyDurationMonths(calculation.getSubsidyDurationMonths())
+                .subsidyMode(calculation.getSubsidyMode())
+                .totalSubsidy(calculation.getTotalSubsidy())
+                .subsidizedPayment(subsidizedPayment)
+                .fullPayment(fullPayment)
+                .balanceAfterSubsidy(balanceAfterSubsidy)
                 .totalInterest(calculation.getTotalInterest())
                 .totalPayment(calculation.getTotalPayment())
                 .createdAt(calculation.getCreatedAt())
@@ -86,6 +103,8 @@ public class LoanCalculationMapper {
                 .principalPart(item.getPrincipalPart())
                 .interestPart(item.getInterestPart())
                 .remainingDebt(item.getRemainingDebt())
+                .subsidyAmount(item.getSubsidyAmount())
+                .earlyPayment(item.isEarlyPayment())
                 .build();
     }
 }

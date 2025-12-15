@@ -8,6 +8,16 @@ body {
     margin: 0;
 }
 
+.hidden {
+    display: none !important;
+}
+
+.hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
 .topbar {
     display: flex;
     justify-content: space-between;
@@ -103,10 +113,16 @@ button:hover {
 
 .early-payment-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 50px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 80px 30px;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
-    align-items: center;
+    align-items: start;
+}
+
+.field-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .early-payment-row.header {
@@ -185,5 +201,22 @@ table th, table td {
 .info {
     color: #15803d;
     margin-bottom: 0.75rem;
+}
+
+/* Стили для досрочных платежей в таблице */
+.early-payment-row-highlight {
+    background-color: #d1fae5 !important; /* Светло-зелёный фон */
+    font-weight: 600;
+}
+
+.early-payment-row-highlight td {
+    border-top: 2px solid #10b981;
+    border-bottom: 2px solid #10b981;
+}
+
+.early-payment-label {
+    color: #059669;
+    font-style: italic;
+    font-weight: 600;
 }
 

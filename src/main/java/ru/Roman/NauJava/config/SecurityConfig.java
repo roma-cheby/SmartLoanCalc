@@ -3,6 +3,8 @@ package ru.Roman.NauJava.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,7 +25,25 @@ public class SecurityConfig {
 
     private final UserService userService;
 
+    /**
+     * Публичный SecurityFilterChain для калькулятора (без авторизации).
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain calculatorSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/calculator")
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll());
+        return http.build();
+    }
+
+    /**
+     * Основной SecurityFilterChain для остальных endpoint'ов.
+     */
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .userDetailsService(userService)
@@ -31,12 +51,15 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/api/**"),
-                                new AntPathRequestMatcher("/actuator/**")))
+                                new AntPathRequestMatcher("/actuator/**"),
+                                new AntPathRequestMatcher("/logout")))
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/calculator", "/register", "/login", "/css/**", "/js/**",
-                                "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/history/**", "/api/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/css/**", "/js/**", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/", "/register", "/login").permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/calculations/public/**")).permitAll()
+                        .requestMatchers("/history/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

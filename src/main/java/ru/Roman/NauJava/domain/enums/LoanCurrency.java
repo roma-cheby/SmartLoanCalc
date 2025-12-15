@@ -6,6 +6,14 @@ package ru.Roman.NauJava.domain.enums;
 public enum LoanCurrency {
     RUB,
     USD,
-    EUR
+    EUR;
+
+    public String getDisplayName() {
+        return switch (this) {
+            case RUB -> "Рубли (RUB)";
+            case USD -> "Доллары (USD)";
+            case EUR -> "Евро (EUR)";
+        };
+    }
 }
 

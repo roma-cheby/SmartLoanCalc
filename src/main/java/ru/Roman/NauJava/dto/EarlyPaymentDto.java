@@ -3,6 +3,7 @@ package ru.Roman.NauJava.dto;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 import ru.Roman.NauJava.domain.enums.EarlyPaymentApplicationMode;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 public class EarlyPaymentDto {
 
     @NotNull(message = "Дата платежа обязательна")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate paymentDate;
 
     @NotNull(message = "Сумма обязательна")

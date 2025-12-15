@@ -49,6 +49,17 @@ public class LoanCalculationRestController {
         return calculationService.calculate(request, authentication.getName());
     }
 
+    /**
+     * Публичный endpoint для расчёта без авторизации.
+     * Результат не сохраняется в историю.
+     */
+    @PostMapping("/public/calculate")
+    @ResponseStatus(HttpStatus.OK)
+    public LoanCalculationResponseDto calculatePublic(@Valid @RequestBody LoanCalculationRequestDto request) {
+        request.setSaveToHistory(false);
+        return calculationService.calculate(request, null);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id, Authentication authentication) {
